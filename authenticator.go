@@ -21,7 +21,7 @@ func NewAuthenticator(conf *Conf) Authenticator {
 	var authenticator Authenticator
 
 	if conf.Auth.Info.Service == "google" {
-		handler := oauth2.Google(&gooauth2.Options{
+		handler := oauth2.Google(&gooauth2.Config{
 			ClientID:     conf.Auth.Info.ClientId,
 			ClientSecret: conf.Auth.Info.ClientSecret,
 			RedirectURL:  conf.Auth.Info.RedirectURL,
@@ -29,7 +29,7 @@ func NewAuthenticator(conf *Conf) Authenticator {
 		})
 		authenticator = &GoogleAuth{&BaseAuth{handler, conf}}
 	} else if conf.Auth.Info.Service == "github" {
-		handler := GithubGeneral(&gooauth2.Options{
+		handler := GithubGeneral(&gooauth2.Config{
 			ClientID:     conf.Auth.Info.ClientId,
 			ClientSecret: conf.Auth.Info.ClientSecret,
 			RedirectURL:  conf.Auth.Info.RedirectURL,
@@ -44,11 +44,13 @@ func NewAuthenticator(conf *Conf) Authenticator {
 }
 
 // Currently, martini-contrib/oauth2 doesn't support github enterprise directly.
-func GithubGeneral(opts *gooauth2.Options, conf *Conf) martini.Handler {
-	authUrl := fmt.Sprintf("%s/login/oauth/authorize", conf.Auth.Info.Endpoint)
-	tokenUrl := fmt.Sprintf("%s/login/oauth/access_token", conf.Auth.Info.Endpoint)
+func GithubGeneral(cfgs *gooauth2.Config, conf *Conf) martini.Handler {
+	cfgs.Endpoint = gooauth2.Endpoint{
+		AuthURL:  fmt.Sprintf("%s/login/oauth/authorize", conf.Auth.Info.Endpoint),
+		TokenURL: fmt.Sprintf("%s/login/oauth/access_token", conf.Auth.Info.Endpoint),
+	}
 
-	return oauth2.NewOAuth2Provider(opts, authUrl, tokenUrl)
+	return oauth2.NewOAuth2Provider(cfgs)
 }
 
 type BaseAuth struct {
