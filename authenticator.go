@@ -3,13 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-martini/martini"
-	gooauth2 "github.com/golang/oauth2"
-	"github.com/martini-contrib/oauth2"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/go-martini/martini"
+	"github.com/martini-contrib/oauth2"
+	gooauth2 "golang.org/x/oauth2"
 )
 
 type Authenticator interface {
