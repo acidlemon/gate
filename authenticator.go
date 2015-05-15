@@ -67,30 +67,34 @@ type GoogleAuth struct {
 }
 
 func (a *GoogleAuth) Authenticate(domain []string, c martini.Context, tokens oauth2.Tokens, w http.ResponseWriter, r *http.Request) {
-	extra := tokens.ExtraData()
-	if _, ok := extra["id_token"]; ok == false {
-		log.Printf("id_token not found")
+	accessToken := tokens.Access()
+	if len(accessToken) == 0 {
+		log.Printf("access_token not found")
 		forbidden(w)
 		return
 	}
 
-	keys := strings.Split(extra["id_token"], ".")
-	if len(keys) < 2 {
-		log.Printf("invalid id_token")
-		forbidden(w)
-		return
-	}
-
-	data, err := base64Decode(keys[1])
+	url := fmt.Sprintf(`https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=%s`,
+		accessToken)
+	resp, err := http.Get(url)
 	if err != nil {
-		log.Printf("failed to decode base64: %s", err.Error())
+		log.Println("cannot fetch userinfo:", err.Error())
+		forbidden(w)
+		return
+	}
+	defer resp.Body.Close()
+
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("cannot read response body:", err.Error())
 		forbidden(w)
 		return
 	}
 
-	var info map[string]interface{}
-	if err := json.Unmarshal(data, &info); err != nil {
-		log.Printf("failed to decode json: %s", err.Error())
+	info := map[string]interface{}{}
+	err = json.Unmarshal(content, &info)
+	if err != nil {
+		log.Println("cannot unmarshal json:", err.Error())
 		forbidden(w)
 		return
 	}
