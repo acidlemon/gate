@@ -67,6 +67,41 @@ type GoogleAuth struct {
 	*BaseAuth
 }
 
+func fetchJSONData(url string) (map[string]interface{}, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	info := map[string]interface{}{}
+	err = json.Unmarshal(content, &info)
+	if err != nil {
+		return nil, err
+	}
+
+	return info, nil
+}
+
+// see https://developers.google.com/identity/protocols/OpenIDConnect#discovery
+func discoveryGoogleUserinfoEndpoint() (string, error) {
+	info, err := fetchJSONData(`https://accounts.google.com/.well-known/openid-configuration`)
+	if err != nil {
+		return "", err
+	}
+
+	if v, ok := info["userinfo_endpoint"].(string); !ok {
+		return "", fmt.Errorf("userinfo_endpoint is not valid:")
+	} else {
+		return v, nil
+	}
+}
+
 func (a *GoogleAuth) Authenticate(domain []string, c martini.Context, tokens oauth2.Tokens, w http.ResponseWriter, r *http.Request) {
 	accessToken := tokens.Access()
 	if len(accessToken) == 0 {
@@ -75,27 +110,17 @@ func (a *GoogleAuth) Authenticate(domain []string, c martini.Context, tokens oau
 		return
 	}
 
-	url := fmt.Sprintf(`https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=%s`,
-		accessToken)
-	resp, err := http.Get(url)
+	userinfoUrl, err := discoveryGoogleUserinfoEndpoint()
 	if err != nil {
-		log.Println("cannot fetch userinfo:", err.Error())
-		forbidden(w)
-		return
-	}
-	defer resp.Body.Close()
-
-	content, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Println("cannot read response body:", err.Error())
+		log.Println("cannot discovery userinfo endpoint", err)
 		forbidden(w)
 		return
 	}
 
-	info := map[string]interface{}{}
-	err = json.Unmarshal(content, &info)
+	url := fmt.Sprintf(`%s?alt=json&access_token=%s`, userinfoUrl, accessToken)
+	info, err := fetchJSONData(url)
 	if err != nil {
-		log.Println("cannot unmarshal json:", err.Error())
+		log.Println("cannot fetch userinfo:", err)
 		forbidden(w)
 		return
 	}
