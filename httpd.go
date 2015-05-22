@@ -114,7 +114,7 @@ func (s *Server) Run() error {
 		registered[path] = true
 		rawPath := rawPaths[i]
 		if rawPath != "" {
-			m.Get(rawPath, func(w http.ResponseWriter, r *http.Request) {
+			m.Any(rawPath, func(w http.ResponseWriter, r *http.Request) {
 				http.Redirect(w, r, rawPath+"/", http.StatusFound)
 			})
 		}
@@ -127,7 +127,7 @@ func (s *Server) Run() error {
 
 	log.Printf("starting static file server for: %s", path)
 	fileServer := http.FileServer(http.Dir(path))
-	m.Get("/**", fileServer.ServeHTTP)
+	m.Any("/**", fileServer.ServeHTTP)
 
 	log.Printf("starting server at %s", s.Conf.Addr)
 
