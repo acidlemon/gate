@@ -30,6 +30,9 @@ auth:
     client_secret: 'secret client secret'
     redirect_url: 'http://example.com/oauth2callback'
 
+  header:
+    user_key: 'x-gate-user'
+
 htdocs: ./
 
 proxy:
@@ -48,6 +51,10 @@ proxy:
 
 	if conf.Addr != ":9999" {
 		t.Errorf("unexpected address: %s", conf.Addr)
+	}
+
+	if conf.Auth.Header.UserKey != "x-gate-user" {
+		t.Errorf("unexpected auth header user key: %s", conf.Auth.Header.UserKey)
 	}
 }
 

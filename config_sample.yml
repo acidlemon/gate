@@ -20,6 +20,10 @@ auth:
     # your app redirect_url for the service: if the service is Google, path is always "/oauth2callback"
     redirect_url: https://yourapp.example.com/oauth2callback
 
+#  # HTTP request header definitions (optional)
+#  header:
+#    user_key: your key # field name for authenticated user info (ex. x-gate-user)
+
 # # restrict user request. (optional)
 # restrictions:
 #   - yourdomain.com    # domain of your Google App (Google)
