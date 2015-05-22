@@ -43,9 +43,25 @@ func (s *Server) Run() error {
 	m := martini.Classic()
 
 	cookieStore := sessions.NewCookieStore([]byte(s.Conf.Auth.Session.Key))
+	cookieOption := sessions.Options{}
 	if domain := s.Conf.Auth.Session.CookieDomain; domain != "" {
-		cookieStore.Options(sessions.Options{Domain: domain})
+		log.Printf("WARNING: auth.session.cookie_domain is DEPRECATED! you should use auth.session.cookie.domain")
+		cookieOption.Domain = domain
 	}
+	if cookie := s.Conf.Auth.Session.Cookie; cookie != nil {
+		cookieOption = sessions.Options{
+			Path:     cookie.Path,
+			Domain:   cookie.Domain,
+			MaxAge:   cookie.MaxAge,
+			Secure:   cookie.Secure,
+			HttpOnly: cookie.HttpOnly,
+		}
+	}
+	if cookieOption.Path == "" {
+		cookieOption.Path = "/"
+	}
+	cookieStore.Options(cookieOption)
+
 	m.Use(sessions.Sessions("session", cookieStore))
 
 	if s.Conf.Auth.Info.Service != noAuthServiceName {

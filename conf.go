@@ -2,9 +2,9 @@ package main
 
 import (
 	"errors"
+	"github.com/martini-contrib/oauth2"
 	"gopkg.in/yaml.v1"
 	"io/ioutil"
-	"github.com/martini-contrib/oauth2"
 )
 
 const (
@@ -33,8 +33,17 @@ type AuthConf struct {
 }
 
 type AuthSessionConf struct {
-	Key          string `yaml:"key"`
-	CookieDomain string `yaml:"cookie_domain"`
+	Key          string      `yaml:"key"`
+	CookieDomain string      `yaml:"cookie_domain"`
+	Cookie       *CookieConf `yaml:"cookie"`
+}
+
+type CookieConf struct {
+	Path     string `yaml:"path"`
+	Domain   string `yaml:"domain"`
+	MaxAge   int    `yaml:"max_age"`
+	Secure   bool   `yaml:"secure"`
+	HttpOnly bool   `yaml:"http_only"`
 }
 
 type AuthInfoConf struct {

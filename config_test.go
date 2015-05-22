@@ -1,10 +1,10 @@
 package main
 
 import (
+	"github.com/martini-contrib/oauth2"
 	"io/ioutil"
 	"os"
 	"testing"
-	"github.com/martini-contrib/oauth2"
 )
 
 func TestParse(t *testing.T) {
@@ -262,5 +262,67 @@ paths:
 	}
 	if oauth2.PathError != "/_gate_error" {
 		t.Errorf("unexpected oauth2.PathError: %s", oauth2.PathError)
+	}
+}
+
+func TestParseCookie(t *testing.T) {
+	f, err := ioutil.TempFile("", "")
+	if err != nil {
+		t.Error(err)
+	}
+	defer func() {
+		f.Close()
+		os.Remove(f.Name())
+	}()
+
+	data := `---
+address: ":9999"
+
+auth:
+  session:
+    key: secret
+    cookie:
+        path: /
+        domain: example.com
+        max_age: 1234
+        secure: yes
+        http_only: yes
+
+  info:
+    service: 'google'
+    client_id: 'secret client id'
+    client_secret: 'secret client secret'
+    redirect_url: 'http://example.com/oauth2callback'
+
+htdocs: ./
+
+proxy:
+  - path: /foo
+    dest: http://example.com/bar
+    strip_path: yes
+`
+	if err := ioutil.WriteFile(f.Name(), []byte(data), 0644); err != nil {
+		t.Error(err)
+	}
+
+	conf, err := ParseConf(f.Name())
+	if err != nil {
+		t.Error(err)
+	}
+
+	if conf.Auth.Session.Cookie.Path != "/" {
+		t.Errorf("unexpected cookie.path: %s", conf.Auth.Session.Cookie.Path)
+	}
+	if conf.Auth.Session.Cookie.Domain != "example.com" {
+		t.Errorf("unexpected cookie.domain: %s", conf.Auth.Session.Cookie.Domain)
+	}
+	if conf.Auth.Session.Cookie.MaxAge != 1234 {
+		t.Errorf("unexpected cookie.max_age: %d", conf.Auth.Session.Cookie.MaxAge)
+	}
+	if !conf.Auth.Session.Cookie.Secure {
+		t.Errorf("unexpected cookie.secure: %s", conf.Auth.Session.Cookie.Secure)
+	}
+	if !conf.Auth.Session.Cookie.HttpOnly {
+		t.Errorf("unexpected cookie.http_only: %s", conf.Auth.Session.Cookie.HttpOnly)
 	}
 }

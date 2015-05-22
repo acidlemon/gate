@@ -26,6 +26,13 @@ auth:
   session:
     # authentication key for cookie store
     key: secret123
+    cookie:
+        # cookie path(default: "/")
+        path: /
+        # Max-Age attribute present and given in seconds(default: no 'Max-Age' specified)
+        max_age: 0
+        secure: no
+        http_only: no
 
   info:
     # oauth2 provider name (`google` or `github`)
@@ -118,7 +125,10 @@ auth:
   session:
     # authentication key for cookie store
     key: secret123
-    # domain of virtual hosts base host
+    cookie:
+        # domain of virtual hosts base host
+        domain: gate.example.com
+    # domain of virtual hosts base host(DEPRECATED)
     cookie_domain: gate.example.com
 
 # proxy definitions

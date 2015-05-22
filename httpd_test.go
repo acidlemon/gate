@@ -114,7 +114,8 @@ address: "127.0.0.1:10000"
 auth:
   session:
     key: dummy
-    cookie_domain: example.com
+    cookie:
+        domain: example.com
   info:
     service: nothing
     client_id: dummy
